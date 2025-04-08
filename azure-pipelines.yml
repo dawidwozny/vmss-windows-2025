@@ -2,9 +2,8 @@ trigger:
   branches:
     include:
       - '*'
-      
-pool:
-  vmImage: windows-2025
+    
+pool: vmss-windows-2025
 
 steps:
 - powershell: wsl --version
