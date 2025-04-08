@@ -1,0 +1,8 @@
+database/data/*
+database/log/*
+database/backup/*
+
+!database/data/placeholder.md
+!database/log/placeholder.md
+!database/backup/placeholder.md
+!database/backup/test.bak

@@ -1,1 +1,1 @@
-# vmss-windows-2025
+# ms-hosted-windows-2025

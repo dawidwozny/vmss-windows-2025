@@ -1,0 +1,122 @@
+name: ci
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: chceck wsl version
+        run: wsl --version
+
+      - name: install wsl distro
+        run: wsl --install Ubuntu
+
+      - name: prevent wsl shutdown
+        run:  wsl -d Ubuntu  --exec dbus-launch true   
+
+      - name: install docker
+        run: | 
+          wsl -- sudo apt-get update
+          wsl -- sudo apt-get install dos2unix
+          wsl -- dos2unix ./docker-install.sh
+          wsl -- ./docker-install.sh
+   
+      - name: compose up (wsl)
+        run: |
+          wsl -- sudo docker compose pull -q  
+          wsl -- sudo docker compose -p test-setup up -d
+
+      - name: docker ps (wsl)
+        run: wsl -- sudo docker ps
+
+      - name: docker ps (windows)
+        run: docker ps
+
+      - name: wait on db (windows)
+        run: |
+          $miliSeconds = 60*1000;
+          $task = [System.Threading.Tasks.Task]::Delay($miliSeconds)
+          $task.Wait()
+
+      - name: docker ps -a (wsl)
+        run: wsl -- sudo docker ps -a
+          
+      - name: compose logs (wsl)
+        run: wsl -- sudo docker compose -p test-setup logs
+
+      - name: curl (wsl)
+        run: wsl -- curl http://localhost:8080
+
+      - name: web-request (windows)
+        run: Invoke-WebRequest -Uri http://localhost:8080
+
+      - name: execute test query (windows)
+        run: |
+          Invoke-Sqlcmd `
+          -ServerInstance "127.0.0.1,1433" `
+          -Database master `
+          -Username "sa" `
+          -Password "SecretPassword9!" `
+          -TrustServer `
+          -Query "SELECT name FROM sys.databases" 
+
+      - name: restore db query (windows)
+        run: |
+          Invoke-Sqlcmd `
+          -ServerInstance "127.0.0.1,1433" `
+          -Database master `
+          -Username "sa" `
+          -Password "SecretPassword9!" `
+          -TrustServer `
+          -Query "RESTORE DATABASE test FROM DISK = '/var/opt/mssql/backup/test.bak' WITH REPLACE;"
+
+      - name: execute test query (windows)
+        run: |
+          Invoke-Sqlcmd `
+          -ServerInstance "127.0.0.1,1433" `
+          -Database test `
+          -Username "sa" `
+          -Password "SecretPassword9!" `
+          -TrustServer `
+          -Query "SELECT * FROM Person;" 
+
+      - name: pull 2022
+        run: docker pull mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022 -q
+
+      - name: run 2022
+        run: docker run -d -p 8081:8080 --isolation=process --name aspnetcore_sample mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022
+
+      - name: pull 2025 (windows)
+        run: docker pull mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2025
+
+      - name: run 2025 (windows) - powershel hello
+        run: docker run --rm --isolation=process mcr.microsoft.com/windows/servercore:ltsc2025-amd64 powershell -Command "Write-Host 'Hello from the other side!'" 
+
+      - name: web-request (windows) - proof linux container still works
+        run: Invoke-WebRequest -Uri http://localhost:8080
+
+      - name: web-request (windows) - check that asp.net 2022 works
+        run: Invoke-WebRequest -Uri http://localhost:8081
+
+
+
+
+        
+
+
+
+
+
+
+        

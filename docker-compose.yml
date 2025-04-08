@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+     - MSSQL_SA_PASSWORD=SecretPassword9!
+     - ACCEPT_EULA=Y
+    volumes:
+      - ./database/data:/var/opt/mssql/data
+      - ./database/log:/var/opt/mssql/log
+      - ./database/backup:/var/opt/mssql/backup
+  web:
+    image: nginx
+    ports:
+      - "8080:80"
