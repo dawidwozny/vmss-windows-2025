@@ -12,3 +12,89 @@ steps:
 - powershell: wsl --install Ubuntu
   displayName: install wsl distro
 
+- powershell: wsl -d Ubuntu  --exec dbus-launch true   
+  displayName: prevent wsl reboot
+
+-  powershell: | 
+    wsl -- sudo apt-get update
+    wsl -- sudo apt-get install dos2unix
+    wsl -- dos2unix ./docker-install.sh
+    wsl -- ./docker-install.sh
+   displayName: install docker
+
+- powershell: |
+    wsl -- sudo docker compose pull -q  
+    wsl -- sudo docker compose -p test-setup up -d
+  displayName: compose up (wsl)
+
+- powershell: wsl -- sudo docker ps
+  displayName: docker ps (wsl)
+
+- powershell: docker ps
+  displayName: docker ps (windows)
+
+- powershell: |
+    $miliSeconds = 60*1000;
+    $task = [System.Threading.Tasks.Task]::Delay($miliSeconds)
+    $task.Wait()
+  displayName: wait on db (windows)
+
+- powershell: wsl -- sudo docker ps -a
+  displayName: docker ps -a (wsl)
+    
+- powershell: wsl -- sudo docker compose -p test-setup logs
+  displayName: compose logs (wsl)
+
+- powershell: wsl -- curl http://localhost:8080
+  displayName: curl (wsl)
+
+- powershell: Invoke-WebRequest -Uri http://localhost:8080
+  displayName: web-request (windows)
+
+- powershell: |
+    Invoke-Sqlcmd `
+    -ServerInstance "127.0.0.1,1433" `
+    -Database master `
+    -Username "sa" `
+    -Password "SecretPassword9!" `
+    -TrustServer `
+    -Query "SELECT name FROM sys.databases" 
+  displayName: execute test query (windows)
+
+- powershell: |
+    Invoke-Sqlcmd `
+    -ServerInstance "127.0.0.1,1433" `
+    -Database master `
+    -Username "sa" `
+    -Password "SecretPassword9!" `
+    -TrustServer `
+    -Query "RESTORE DATABASE test FROM DISK = '/var/opt/mssql/backup/test.bak' WITH REPLACE;"
+  displayName: restore db query (windows)
+
+- powershell: |
+    Invoke-Sqlcmd `
+    -ServerInstance "127.0.0.1,1433" `
+    -Database test `
+    -Username "sa" `
+    -Password "SecretPassword9!" `
+    -TrustServer `
+    -Query "SELECT * FROM Person;" 
+  displayName: execute test query (windows)
+
+- powershell: docker pull mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022 -q
+  displayName: pull 2022
+
+- powershell: docker run -d -p 8081:8080 --isolation=process --name aspnetcore_sample mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022
+  displayName: run 2022
+
+- powershell: docker pull mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2025
+  displayName: pull 2025 (windows)
+
+- powershell: docker run --rm --isolation=process mcr.microsoft.com/windows/servercore:ltsc2025-amd64 powershell -Command "Write-Host 'Hello from the other side!'" 
+  displayName: run 2025 (windows) - powershel hello
+
+- powershell: Invoke-WebRequest -Uri http://localhost:8080
+  displayName: web-request (windows) - proof linux container still works
+
+- powershell: Invoke-WebRequest -Uri http://localhost:8081
+  displayName: web-request (windows) - check that asp.net 2022 works
