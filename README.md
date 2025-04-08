@@ -1,0 +1,1 @@
+# vmss-windows-2025
