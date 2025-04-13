@@ -2,99 +2,182 @@ trigger:
   branches:
     include:
       - '*'
-    
+
 pool: vmss-windows-2025
 
 steps:
-- powershell: wsl --version
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: wsl --version
+    pwsh: true
   displayName: check wsl version
 
-- powershell: wsl --install Ubuntu
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: wsl --install Ubuntu
+    pwsh: true
   displayName: install wsl distro
 
-- powershell: wsl -d Ubuntu  --exec dbus-launch true   
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: wsl -d Ubuntu --exec dbus-launch true
+    pwsh: true
   displayName: prevent wsl reboot
 
--  powershell: | 
-    wsl -- sudo apt-get update
-    wsl -- sudo apt-get install dos2unix
-    wsl -- dos2unix ./docker-install.sh
-    wsl -- ./docker-install.sh
-   displayName: install docker
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      wsl -- sudo apt-get update
+      wsl -- sudo apt-get install dos2unix
+      wsl -- dos2unix ./docker-install.sh
+      wsl -- ./docker-install.sh
+    pwsh: true
+  displayName: install docker
 
-- powershell: |
-    wsl -- sudo docker compose pull -q  
-    wsl -- sudo docker compose -p test-setup up -d
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      wsl -- sudo docker compose pull -q  
+      wsl -- sudo docker compose -p test-setup up -d
+    pwsh: true
   displayName: compose up (wsl)
 
-- powershell: wsl -- sudo docker ps
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: wsl -- sudo docker ps
+    pwsh: true
   displayName: docker ps (wsl)
 
-- powershell: docker ps
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: docker ps
+    pwsh: true
   displayName: docker ps (windows)
 
-- powershell: |
-    $miliSeconds = 60*1000;
-    $task = [System.Threading.Tasks.Task]::Delay($miliSeconds)
-    $task.Wait()
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      $miliSeconds = 60 * 1000
+      [System.Threading.Tasks.Task]::Delay($miliSeconds).Wait()
+    pwsh: true
   displayName: wait on db (windows)
 
-- powershell: wsl -- sudo docker ps -a
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: wsl -- sudo docker ps -a
+    pwsh: true
   displayName: docker ps -a (wsl)
-    
-- powershell: wsl -- sudo docker compose -p test-setup logs
+
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: wsl -- sudo docker compose -p test-setup logs
+    pwsh: true
   displayName: compose logs (wsl)
 
-- powershell: wsl -- curl http://localhost:8080
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: wsl -- curl http://localhost:8080
+    pwsh: true
   displayName: curl (wsl)
 
-- powershell: Invoke-WebRequest -Uri http://localhost:8080
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: Invoke-WebRequest -Uri http://localhost:8080
+    pwsh: true
   displayName: web-request (windows)
 
-- powershell: |
-    Invoke-Sqlcmd `
-    -ServerInstance "127.0.0.1,1433" `
-    -Database master `
-    -Username "sa" `
-    -Password "SecretPassword9!" `
-    -TrustServer `
-    -Query "SELECT name FROM sys.databases" 
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Invoke-Sqlcmd `
+      -ServerInstance "127.0.0.1,1433" `
+      -Database master `
+      -Username "sa" `
+      -Password "SecretPassword9!" `
+      -TrustServer `
+      -Query "SELECT name FROM sys.databases"
+    pwsh: true
   displayName: execute test query (windows)
 
-- powershell: |
-    Invoke-Sqlcmd `
-    -ServerInstance "127.0.0.1,1433" `
-    -Database master `
-    -Username "sa" `
-    -Password "SecretPassword9!" `
-    -TrustServer `
-    -Query "RESTORE DATABASE test FROM DISK = '/var/opt/mssql/backup/test.bak' WITH REPLACE;"
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Invoke-Sqlcmd `
+      -ServerInstance "127.0.0.1,1433" `
+      -Database master `
+      -Username "sa" `
+      -Password "SecretPassword9!" `
+      -TrustServer `
+      -Query "RESTORE DATABASE test FROM DISK = '/var/opt/mssql/backup/test.bak' WITH REPLACE;"
+    pwsh: true
   displayName: restore db query (windows)
 
-- powershell: |
-    Invoke-Sqlcmd `
-    -ServerInstance "127.0.0.1,1433" `
-    -Database test `
-    -Username "sa" `
-    -Password "SecretPassword9!" `
-    -TrustServer `
-    -Query "SELECT * FROM Person;" 
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: |
+      Invoke-Sqlcmd `
+      -ServerInstance "127.0.0.1,1433" `
+      -Database test `
+      -Username "sa" `
+      -Password "SecretPassword9!" `
+      -TrustServer `
+      -Query "SELECT * FROM Person;"
+    pwsh: true
   displayName: execute test query (windows)
 
-- powershell: docker pull mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022 -q
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: docker pull mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022 -q
+    pwsh: true
   displayName: pull 2022
 
-- powershell: docker run -d -p 8081:8080 --isolation=process --name aspnetcore_sample mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: docker run -d -p 8081:8080 --isolation=process --name aspnetcore_sample mcr.microsoft.com/dotnet/samples:aspnetapp-8.0-nanoserver-ltsc2022
+    pwsh: true
   displayName: run 2022
 
-- powershell: docker pull mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2025
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: docker pull mcr.microsoft.com/dotnet/aspnet:8.0-windowsservercore-ltsc2025
+    pwsh: true
   displayName: pull 2025 (windows)
 
-- powershell: docker run --rm --isolation=process mcr.microsoft.com/windows/servercore:ltsc2025-amd64 powershell -Command "Write-Host 'Hello from the other side!'" 
-  displayName: run 2025 (windows) - powershel hello
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: docker run --rm --isolation=process mcr.microsoft.com/windows/servercore:ltsc2025-amd64 powershell -Command "Write-Host 'Hello from the other side!'"
+    pwsh: true
+  displayName: run 2025 (windows) - powershell hello
 
-- powershell: Invoke-WebRequest -Uri http://localhost:8080
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: Invoke-WebRequest -Uri http://localhost:8080
+    pwsh: true
   displayName: web-request (windows) - proof linux container still works
 
-- powershell: Invoke-WebRequest -Uri http://localhost:8081
+- task: PowerShell@2
+  inputs:
+    targetType: 'inline'
+    script: Invoke-WebRequest -Uri http://localhost:8081
+    pwsh: true
   displayName: web-request (windows) - check that asp.net 2022 works
