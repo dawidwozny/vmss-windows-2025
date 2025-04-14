@@ -3,7 +3,7 @@ trigger:
     include:
       - '*'
 
-pool: vmss-windows-2025
+pool: mp-windows-2025
 
 steps:
 - task: PowerShell@2
