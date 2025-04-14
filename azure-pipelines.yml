@@ -6,6 +6,9 @@ trigger:
 pool: vmss-windows-2025
 
 steps:
+- checkout: self
+  lfs: true
+
 - task: PowerShell@2
   inputs:
     targetType: 'inline'
